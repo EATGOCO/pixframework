@@ -576,6 +576,24 @@ abstract class Pix_Table
 	return new $rowClass($conf);
     }
 
+
+    /**
+     * bulk insert
+     *
+     * @param array $keys
+     * @param array $values_list
+     * @param array $options (optional)
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function bulkInsert($keys, $values_list, $options = array())
+    {
+        $table = self::getTable();
+
+        return $table->getDb()->bulkInsert($table, $keys, $values_list, $options);
+    }
+
     /**
      * insert 新增一筆資料進資料庫(立刻會存進資料庫)
      * 
@@ -1067,13 +1085,13 @@ abstract class Pix_Table
         if (is_null($table_name)) {
             while (true) {
                 $table_name = 'Pix_Table_EmptyTable_' . crc32(uniqid());
-                if (!class_exists($table_name)) {
+                if (!class_exists($table_name, false)) {
                     break;
                 }
             }
         }
 
-        if (class_exists($table_name)) {
+        if (class_exists($table_name, false)) {
             throw new Pix_Table_Exception("newEmptyTable failed, {$table_name} is existed.");
         }
 

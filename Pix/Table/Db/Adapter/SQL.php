@@ -146,12 +146,7 @@ class Pix_Table_Db_Adapter_SQL extends Pix_Table_Db_Adapter_Abstract
         if (is_array($select_columns)) {
             $cols = array();
             foreach ($select_columns as $col) {
-                list($column_func, $column) = preg_split('/\s/', $col);
-                if ($column) {
-                    $cols[] = $column_func . ' ' . $this->column_quote($column, $table);
-                } else {
-                    $cols[] = $this->column_quote($col);
-                }
+                $cols[] = $this->column_quote($col, $table);
             }
             $select_expression = implode(', ', $cols);
         }
@@ -222,6 +217,30 @@ class Pix_Table_Db_Adapter_SQL extends Pix_Table_Db_Adapter_Abstract
         $sql .= $this->_get_where_clause(Pix_Table_Search::factory(array_combine($table->getPrimaryColumns(), $row->getPrimaryValues())), $table);
 
 	return $this->query($sql);
+    }
+
+    /**
+     * bulk insert
+     *
+     * @param Pix_Table $table
+     * @param array $keys
+     * @param array $values_list
+     * @param array $options
+     * @access public
+     * @return void
+     */
+    public function bulkInsert($table, $keys, $values_list, $options = array())
+    {
+        $sql = 'INSERT INTO ' . $this->column_quote($table->getTableName());
+        $sql .= ' (' . implode(',', array_map(array($this, 'column_quote'), $keys)) . ')';
+        $sql .= ' VALUES ';
+        $sql .= implode(',', array_map(function($values) use ($table, $keys){
+            return '(' . implode(',', array_map(function($value, $key) use ($table){
+                return $this->quoteWithColumn($table, $value, $key);
+            }, $values, $keys)) . ')';
+        }, $values_list));
+
+        $this->query($sql);
     }
 
     /**
